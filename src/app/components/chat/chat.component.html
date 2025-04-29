@@ -1,0 +1,8 @@
+<label>Nom :</label>
+<input type="text" [(ngModel)]="newMessage" name="newMessage" />
+
+<button (click)="send()">Soumettre</button>
+
+<div *ngFor="let msg of messages">
+  <b>{{ msg.sender }}:</b> {{ msg.content }}
+</div>
