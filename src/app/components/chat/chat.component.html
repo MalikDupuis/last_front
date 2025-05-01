@@ -1,8 +1,35 @@
-<label>Nom :</label>
-<input type="text" [(ngModel)]="newMessage" name="newMessage" />
+<!-- Choix du rôle -->
+<div *ngIf="!role">
+  <button (click)="chooseRole('client')">Je suis un client</button>
+  <button (click)="chooseRole('support')">Je suis le support</button>
+</div>
 
-<button (click)="send()">Soumettre</button>
+<!-- Interface support -->
+<div *ngIf="role === 'support'">
+  <h3>Clients connectés :</h3>
+  <ul>
+    <li *ngFor="let clientId of clientIds" (click)="selectedClientId = clientId"
+        [style.fontWeight]="selectedClientId === clientId ? 'bold' : 'normal'">
+      {{ clientId }}
+    </li>
+  </ul>
 
-<div *ngFor="let msg of messages">
-  <b>{{ msg.sender }}:</b> {{ msg.content }}
+  <h4 *ngIf="selectedClientId">Discussion avec {{ selectedClientId }} :</h4>
+
+  <div *ngFor="let msg of getMessagesForSelectedClient()">
+    <b>{{ msg.sender }}:</b> {{ msg.content }}
+  </div>
+
+  <input [(ngModel)]="newMessage" placeholder="Votre message..." />
+  <button (click)="send()" [disabled]="!selectedClientId">Envoyer</button>
+</div>
+
+<!-- Interface client -->
+<div *ngIf="role === 'client'">
+  <div *ngFor="let msg of messages">
+    <b>{{ msg.sender }}:</b> {{ msg.content }}
+  </div>
+
+  <input [(ngModel)]="newMessage" placeholder="Votre message..." />
+  <button (click)="send()">Envoyer</button>
 </div>

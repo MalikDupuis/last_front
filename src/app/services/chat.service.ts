@@ -1,49 +1,27 @@
 import { Injectable } from '@angular/core';
-import { Client, Message, over } from 'stompjs';
+import * as Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { ChatMessage } from '../interfaces/chatMessage.interface'
+import { Subject } from 'rxjs';
 
-export interface ChatMessage {
-  sender: string;
-  content: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ChatService {
-  private stompClient!: Client;
-  private messagesSubject = new BehaviorSubject<ChatMessage | null>(null);
-  public messages$ = this.messagesSubject.asObservable();
+  private stompClient: any;
+  public message$: Subject<ChatMessage> = new Subject();
 
-  constructor() {
-    this.connect(); // Très important !
-  }
-  
-
-  connect(): void {
+  connect(role: 'client' | 'support', id: string) {
     const socket = new SockJS('http://localhost:8080/ws');
-    this.stompClient = over(socket);
+    this.stompClient = Stomp.over(socket);
 
     this.stompClient.connect({}, () => {
-      console.log('WebSocket connected');
-      this.stompClient.subscribe('/topic/messages', (message: Message) => {
-        const chatMessage: ChatMessage = JSON.parse(message.body);
-        this.messagesSubject.next(chatMessage);
+      const topic = role === 'support' ? '/topic/support' : `/topic/${id}`;
+      this.stompClient.subscribe(topic, (msg: any) => {
+        this.message$.next(JSON.parse(msg.body));
       });
-    }, (error) => {
-      console.error('WebSocket connection error:', error);
     });
   }
 
-  
-  
-
   sendMessage(message: ChatMessage) {
-    if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.send('/app/chat.send', {}, JSON.stringify(message));
-    } else {
-      console.error('WebSocket is not connected');
-    }
+    this.stompClient.send('/app/chat.send', {}, JSON.stringify(message));
   }
 }
